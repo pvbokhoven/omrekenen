@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Omrekenen A ↔ kW</title>
+<script>
+  // Thema zo vroeg mogelijk zetten om flitsen te voorkomen
+  try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #1d2330;
+    --muted: #5d6677;
+    --border: #dde1e8;
+    --accent: #0a7c86;
+    --accent-soft: #e3f3f4;
+    --result: #0b5d65;
+    --code-bg: #f0f2f5;
+    --input-bg: #f7f8fa;
+    --radius: 12px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151b;
+      --card: #1b2028;
+      --text: #e7eaf0;
+      --muted: #9aa3b2;
+      --border: #2c333f;
+      --accent: #3cc3cd;
+      --accent-soft: #173238;
+      --result: #7fdde4;
+      --code-bg: #232a34;
+      --input-bg: #141820;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151b;
+    --card: #1b2028;
+    --text: #e7eaf0;
+    --muted: #9aa3b2;
+    --border: #2c333f;
+    --accent: #3cc3cd;
+    --accent-soft: #173238;
+    --result: #7fdde4;
+    --code-bg: #232a34;
+    --input-bg: #141820;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    transition: background .2s, color .2s;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  header h1 { margin: 0 0 4px; font-size: 1.8rem; }
+  header p { margin: 0; color: var(--muted); }
+
+  .theme-switch { flex-shrink: 0; display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 1rem; margin-top: 6px; }
+  .theme-switch .icon { width: 18px; text-align: center; transition: color .2s; }
+  .theme-switch .icon.on { color: var(--accent); }
+  #themeToggle {
+    position: relative; width: 52px; height: 28px; padding: 0; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--code-bg);
+    transition: background .25s, border-color .25s;
+  }
+  #themeToggle::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+    border-radius: 50%; background: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    transition: transform .25s ease;
+  }
+  #themeToggle[aria-checked="true"]::after { transform: translateX(24px); }
+  #themeToggle:hover { border-color: var(--accent); }
+  #themeToggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  nav.tabs { display: flex; gap: 8px; margin: 24px 0 16px; flex-wrap: wrap; }
+  nav.tabs button {
+    border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    padding: 8px 16px; border-radius: 999px; font: inherit; font-size: .95rem; cursor: pointer;
+  }
+  nav.tabs button:hover { border-color: var(--accent); color: var(--accent); }
+  nav.tabs button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] nav.tabs button.active { color: #0c1a1c; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) nav.tabs button.active { color: #0c1a1c; } }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 20px;
+  }
+  .card h2 { margin: 0 0 16px; font-size: 1.25rem; }
+  .card h3 { margin: 24px 0 8px; font-size: 1.05rem; }
+  .card h3:first-child { margin-top: 0; }
+
+  details.card { padding: 0; }
+  details.card > summary {
+    list-style: none; cursor: pointer; padding: 18px 24px; font-size: 1.15rem; font-weight: 600;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  details.card > summary::-webkit-details-marker { display: none; }
+  details.card > summary::after {
+    content: ""; width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+    transform: rotate(45deg); transition: transform .2s; margin-right: 4px;
+  }
+  details.card[open] > summary::after { transform: rotate(-135deg); }
+  details.card > summary:hover { color: var(--accent); }
+  details.card > .body { padding: 0 24px 24px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+
+  .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button {
+    flex: 1; border: 0; background: transparent; color: var(--text);
+    padding: 9px 6px; font: inherit; font-size: .9rem; cursor: pointer;
+  }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .seg.small { display: inline-flex; margin-left: 8px; }
+  .seg.small button { padding: 2px 10px; font-size: .8rem; flex: none; }
+
+  label.field, div.field { display: block; margin-top: 16px; }
+  .field-label { display: flex; align-items: center; font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
+  .input-row { display: flex; align-items: center; gap: 8px; }
+  .input-row input {
+    flex: 1; min-width: 0; padding: 10px 12px; font: inherit; font-size: 1.05rem;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--input-bg); color: var(--text);
+  }
+  .input-row input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .input-row input.invalid { outline: 2px solid #d4483b; }
+  .unit { width: 42px; color: var(--muted); font-size: .95rem; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .chips button {
+    border: 1px solid var(--border); background: transparent; color: var(--muted);
+    border-radius: 6px; padding: 3px 8px; font: inherit; font-size: .8rem; cursor: pointer;
+  }
+  .chips button:hover { border-color: var(--accent); color: var(--accent); }
+  .hint { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+  .label-sm { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+
+  .result-main {
+    background: var(--accent-soft); border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+  }
+  .result-main .label { font-size: .85rem; color: var(--muted); }
+  .result-main .value { font-size: 2.4rem; font-weight: 700; color: var(--result); line-height: 1.15; }
+  .result-sub { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .result-sub > div { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+  .result-sub .label { font-size: .8rem; color: var(--muted); }
+  .result-sub .value { font-size: 1.25rem; font-weight: 600; }
+
+  .steps {
+    margin-top: 16px; background: var(--code-bg); border-radius: 10px; padding: 14px 16px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9rem;
+    overflow-x: auto; white-space: pre;
+  }
+
+  .formula {
+    font-family: "Cambria Math", "STIX Two Math", Georgia, serif; font-size: 1.2rem;
+    background: var(--code-bg); border-radius: 8px; padding: 8px 14px; margin: 4px 6px 4px 0;
+    display: inline-block;
+  }
+  .formulas { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .formulas .sep { color: var(--muted); font-size: .9rem; }
+  dl.vars { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 8px 0; }
+  dl.vars dt { font-weight: 600; font-family: Georgia, serif; }
+  dl.vars dd { margin: 0; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: .82rem; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--accent-soft); }
+  .table-wrap { overflow-x: auto; }
+  .note { font-size: .85rem; color: var(--muted); margin-top: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Omrekenen stroom ↔ vermogen</h1>
+      <p>Rekenmachines voor laag- en middenspanning, met formules en uitleg.</p>
+    </div>
+    <div class="theme-switch">
+      <span class="icon" id="iconLight" aria-hidden="true">☀︎</span>
+      <button id="themeToggle" type="button" role="switch" aria-checked="false" aria-label="Donker thema"></button>
+      <span class="icon" id="iconDark" aria-hidden="true">☾</span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-mode="a2kw">A → kW</button>
+    <button data-mode="kw2a">kW → A</button>
+  </nav>
+
+  <!-- ===================== Rekenmachine ===================== -->
+  <section class="card">
+    <h2 id="calcTitle"></h2>
+    <div class="grid">
+      <div>
+        <span class="label-sm">Systeem</span>
+        <div class="seg" id="system">
+          <button data-v="dc">DC</button>
+          <button data-v="1f">1-fase AC</button>
+          <button data-v="3f">3-fase AC</button>
+        </div>
+
+        <div id="voltType" style="margin-top:12px">
+          <span class="label-sm">Opgegeven spanning</span>
+          <div class="seg">
+            <button data-v="ll">Lijnspanning (fase–fase)</button>
+            <button data-v="ln">Fasespanning (fase–nul)</button>
+          </div>
+        </div>
+
+        <!-- Invoer stroom (A → kW) -->
+        <label class="field" id="fieldI">
+          <span class="field-label">Stroom I (per fase)</span>
+          <div class="input-row"><input id="I" inputmode="decimal" value="25"><span class="unit">A</span></div>
+          <div class="chips" data-target="I">
+            <button data-v="25">25</button><button data-v="35">35</button><button data-v="50">50</button>
+            <button data-v="63">63</button><button data-v="80">80</button>
+          </div>
+        </label>
+
+        <!-- Invoer vermogen (kW → A) -->
+        <div class="field" id="fieldP">
+          <span class="field-label">Vermogen
+            <span class="seg small" id="pType">
+              <button data-v="kw">kW</button>
+              <button data-v="kva">kVA</button>
+            </span>
+          </span>
+          <div class="input-row"><input id="P" inputmode="decimal" value="5,75"><span class="unit" id="pUnit">kW</span></div>
+          <div class="chips" data-target="P">
+            <button data-v="3.7">3,7</button><button data-v="11">11</button><button data-v="17.3">17,3</button>
+            <button data-v="22">22</button><button data-v="50">50</button><button data-v="100">100</button>
+          </div>
+          <div class="hint" id="pHint"></div>
+        </div>
+
+        <label class="field">
+          <span class="field-label">Spanning U</span>
+          <div class="input-row"><input id="U" inputmode="decimal" value="230"><span class="unit">V</span></div>
+          <div class="chips" data-target="U">
+            <button data-v="230">230 V</button><button data-v="400">400 V</button>
+            <button data-v="10000">10 kV</button><button data-v="20000">20 kV</button>
+          </div>
+        </label>
+
+        <label class="field" id="cosField">
+          <span class="field-label">Arbeidsfactor cos φ</span>
+          <div class="input-row"><input id="cos" inputmode="decimal" value="1"><span class="unit"></span></div>
+          <div class="chips" data-target="cos">
+            <button data-v="1">1</button><button data-v="0.95">0,95</button>
+            <button data-v="0.9">0,9</button><button data-v="0.85">0,85</button>
+          </div>
+          <div class="hint">Tussen 0 en 1. Bij cos φ = 1 is kW gelijk aan kVA.</div>
+        </label>
+      </div>
+
+      <div>
+        <div class="result-main">
+          <div class="label" id="mainLabel"></div>
+          <div class="value" id="mainValue">–</div>
+        </div>
+        <div class="result-sub" id="subResults">
+          <div><div class="label" id="sub1Label"></div><div class="value" id="sub1Value">–</div></div>
+          <div><div class="label" id="sub2Label"></div><div class="value" id="sub2Value">–</div></div>
+        </div>
+        <div class="steps" id="steps"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Uitleg ===================== -->
+  <details class="card">
+    <summary>Uitleg en formules</summary>
+    <div class="body">
+      <h3>Gelijkstroom (DC)</h3>
+      <div class="formulas">
+        <div class="formula">P = U · I</div><span class="sep">⇔</span><div class="formula">I = P / U</div>
+      </div>
+      <p>Bij gelijkstroom is er geen faseverschuiving: vermogen is simpelweg spanning maal stroom.</p>
+
+      <h3>1-fase wisselstroom</h3>
+      <div class="formulas">
+        <div class="formula">P = U · I · cos φ</div><span class="sep">⇔</span><div class="formula">I = P / (U · cos φ)</div>
+      </div>
+      <p>Hier is <em>U</em> de fasespanning (in Nederland 230 V). De factor cos φ geeft aan welk deel van het
+        schijnbaar vermogen daadwerkelijk als werkelijk vermogen wordt omgezet.</p>
+
+      <h3>3-fase wisselstroom</h3>
+      <div class="formulas">
+        <div class="formula">P = √3 · U<sub>L</sub> · I · cos φ</div><span class="sep">⇔</span>
+        <div class="formula">I = P / (√3 · U<sub>L</sub> · cos φ)</div>
+      </div>
+      <div class="formulas">
+        <span class="sep">of met fasespanning:</span>
+        <div class="formula">P = 3 · U<sub>f</sub> · I · cos φ</div>
+      </div>
+      <p>Beide vormen zijn gelijk, omdat U<sub>L</sub> = √3 · U<sub>f</sub> (400 V ≈ √3 · 230 V).
+        De stroom <em>I</em> is de stroom per fase, uitgaande van een symmetrische belasting.
+        Voor middenspanning (10 of 20 kV) reken je altijd met de lijnspanning.</p>
+
+      <h3>Schijnbaar en blindvermogen</h3>
+      <div class="formulas">
+        <div class="formula">S = P / cos φ</div>
+        <div class="formula">Q = S · sin φ = √(S² − P²)</div>
+      </div>
+      <p>Kabels, transformatoren en aansluitingen worden gedimensioneerd op stroom, en dus op het
+        <strong>schijnbaar vermogen (kVA)</strong>. Daarom drukt een netbeheerder transportcapaciteit vaak uit in kVA.
+        Ga je van kVA naar A, dan heb je cos φ niet nodig: I = S / (√3 · U<sub>L</sub>).</p>
+
+      <h3>Variabelen</h3>
+      <dl class="vars">
+        <dt>P</dt><dd>werkelijk vermogen, in W of kW</dd>
+        <dt>S</dt><dd>schijnbaar vermogen, in VA of kVA</dd>
+        <dt>Q</dt><dd>blindvermogen, in var of kvar</dd>
+        <dt>U<sub>L</sub></dt><dd>lijnspanning (fase–fase), bijv. 400 V of 10 kV</dd>
+        <dt>U<sub>f</sub></dt><dd>fasespanning (fase–nul), bijv. 230 V</dd>
+        <dt>I</dt><dd>stroom per fase, in A</dd>
+        <dt>cos φ</dt><dd>arbeidsfactor (power factor), tussen 0 en 1</dd>
+        <dt>√3</dt><dd>≈ 1,732, de verhouding tussen lijn- en fasespanning in een 3-fase systeem</dd>
+      </dl>
+    </div>
+  </details>
+
+  <!-- ===================== Tabel ===================== -->
+  <details class="card">
+    <summary>Gangbare aansluitingen (laagspanning)</summary>
+    <div class="body">
+      <p class="note">Berekend bij 230 V / 400 V en de cos φ uit de rekenmachine (nu <span id="tblCos">1</span>).
+        Klik op een rij om hem in de A → kW rekenmachine te laden.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aansluiting</th><th class="num">kVA</th><th class="num">kW</th></tr></thead>
+          <tbody id="tbl"></tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+</div>
+
+<script>
+  const SQRT3 = Math.sqrt(3);
+  const state = { mode: 'a2kw', system: '1f', voltType: 'll', pType: 'kw' };
+  const $ = id => document.getElementById(id);
+
+  /* ---------- Thema ---------- */
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => {
+    const t = document.documentElement.dataset.theme;
+    return t ? t === 'dark' : darkQuery.matches;
+  };
+  function renderThemeButton() {
+    const dark = isDark();
+    $('themeToggle').setAttribute('aria-checked', String(dark));
+    $('iconLight').classList.toggle('on', !dark);
+    $('iconDark').classList.toggle('on', dark);
+  }
+  $('themeToggle').addEventListener('click', () => {
+    const next = isDark() ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('theme', next); } catch (e) {}
+    renderThemeButton();
+  });
+  darkQuery.addEventListener('change', renderThemeButton);
+  renderThemeButton();
+
+  /* ---------- Hulpfuncties ---------- */
+  const fmt = (x, d = 2) => x.toLocaleString('nl-NL', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtIn = x => x.toLocaleString('nl-NL', { maximumFractionDigits: 4, useGrouping: false });
+  const parse = s => {
+    const v = parseFloat(String(s).trim().replace(/\s/g, '').replace(',', '.'));
+    return Number.isFinite(v) ? v : NaN;
+  };
+
+  // Kiest W/kW/MW passend bij de grootte
+  function power(watts, unit) {
+    const a = Math.abs(watts);
+    if (a >= 1e6) return fmt(watts / 1e6, 3) + ' M' + unit;
+    if (a >= 1e3) return fmt(watts / 1e3, 2) + ' k' + unit;
+    return fmt(watts, 0) + ' ' + unit;
+  }
+  function current(amps) {
+    return fmt(amps, amps >= 100 ? 1 : 2) + ' A';
+  }
+
+  // Factor tussen U·I en S: 1 (DC/1-fase), √3 (3-fase lijnspanning) of 3 (3-fase fasespanning)
+  function factor(system, voltType) {
+    if (system !== '3f') return 1;
+    return voltType === 'll' ? SQRT3 : 3;
+  }
+  // Van stroom naar vermogens (W, VA, var)
+  function fromCurrent(system, voltType, I, U, cos) {
+    if (system === 'dc') cos = 1;
+    const S = factor(system, voltType) * U * I;
+    return { S, P: S * cos, Q: S * Math.sqrt(Math.max(0, 1 - cos * cos)) };
+  }
+
+  /* ---------- Berekenen en tonen ---------- */
+  function update() {
+    const isDC = state.system === 'dc';
+    const a2kw = state.mode === 'a2kw';
+    const U = parse($('U').value);
+    let cos = isDC ? 1 : parse($('cos').value);
+    const I_in = parse($('I').value);
+    const P_in = parse($('P').value);
+
+    // Zichtbaarheid
+    $('calcTitle').textContent = a2kw ? 'Stroom (A) naar vermogen (kW)' : 'Vermogen (kW) naar stroom (A)';
+    $('fieldI').style.display = a2kw ? '' : 'none';
+    $('fieldP').style.display = a2kw ? 'none' : '';
+    $('voltType').style.display = state.system === '3f' ? '' : 'none';
+    $('cosField').style.display = isDC ? 'none' : '';
+    $('subResults').style.display = isDC ? 'none' : '';
+    $('pType').style.display = isDC ? 'none' : '';
+    const kva = !isDC && state.pType === 'kva';
+    $('pUnit').textContent = kva ? 'kVA' : 'kW';
+    $('pHint').textContent = kva ? 'Schijnbaar vermogen: cos φ is niet nodig voor de stroom.' : '';
+
+    // Validatie
+    const cosOk = isDC || (cos > 0 && cos <= 1);
+    $('I').classList.toggle('invalid', a2kw && !(I_in >= 0));
+    $('P').classList.toggle('invalid', !a2kw && !(P_in >= 0));
+    $('U').classList.toggle('invalid', !(U > 0));
+    $('cos').classList.toggle('invalid', !cosOk);
+    renderTable(cosOk && !isDC ? cos : 1);
+
+    const inOk = a2kw ? I_in >= 0 : P_in >= 0;
+    if (!(inOk && U > 0 && cosOk)) {
+      $('mainValue').textContent = $('sub1Value').textContent = $('sub2Value').textContent = '–';
+      $('mainLabel').textContent = a2kw ? 'Werkelijk vermogen P' : 'Stroom I per fase';
+      $('steps').textContent = 'Vul geldige waarden in.';
+      return;
+    }
+
+    const f = factor(state.system, state.voltType);
+    const fSym = state.system !== '3f' ? '' : (state.voltType === 'll' ? '√3 · ' : '3 · ');
+    const uSym = state.system !== '3f' ? 'U' : (state.voltType === 'll' ? 'U_L' : 'U_f');
+    const u = fmtIn(U), c = fmtIn(cos);
+    const cosTerm = isDC ? '' : ' · cos φ';
+    const cosVal = isDC ? '' : ` · ${c}`;
+    let lines;
+
+    if (a2kw) {
+      const I = I_in, r = fromCurrent(state.system, state.voltType, I, U, cos);
+      const i = fmtIn(I);
+      $('mainLabel').textContent = 'Werkelijk vermogen P';
+      $('mainValue').textContent = power(r.P, 'W');
+      $('sub1Label').textContent = 'Schijnbaar vermogen S';
+      $('sub1Value').textContent = power(r.S, 'VA');
+      $('sub2Label').textContent = 'Blindvermogen Q';
+      $('sub2Value').textContent = power(r.Q, 'var');
+      lines = [
+        `P = ${fSym}${uSym} · I${cosTerm}`,
+        `P = ${fSym}${u} V · ${i} A${cosVal}`,
+        `P = ${fmt(r.P, 0)} W = ${fmt(r.P / 1000, 2)} kW`,
+      ];
+      if (!isDC) lines.push('', `S = ${fSym}${uSym} · I = ${fmt(r.S / 1000, 2)} kVA`,
+                            `Q = S · sin φ = ${fmt(r.Q / 1000, 2)} kvar`);
+    } else {
+      const Pw = P_in * 1000, p = fmtIn(P_in);
+      let I, r;
+      if (kva) {
+        I = Pw / (f * U);
+        r = fromCurrent(state.system, state.voltType, I, U, cos);
+        lines = [
+          `I = S / (${fSym}${uSym})`,
+          `I = ${fmtIn(Pw)} VA / (${fSym}${u} V)`,
+          `I = ${fmt(I, 2)} A`,
+          '', `P = S · cos φ = ${fmt(r.P / 1000, 2)} kW`,
+          `Q = S · sin φ = ${fmt(r.Q / 1000, 2)} kvar`,
+        ];
+        $('sub1Label').textContent = 'Werkelijk vermogen P';
+        $('sub1Value').textContent = power(r.P, 'W');
+      } else {
+        I = Pw / (f * U * cos);
+        r = fromCurrent(state.system, state.voltType, I, U, cos);
+        lines = [
+          `I = P / (${fSym}${uSym}${cosTerm})`,
+          `I = ${fmtIn(Pw)} W / (${fSym}${u} V${cosVal})`,
+          `I = ${fmt(I, 2)} A`,
+        ];
+        if (!isDC) lines.push('', `S = P / cos φ = ${fmt(r.S / 1000, 2)} kVA`,
+                              `Q = S · sin φ = ${fmt(r.Q / 1000, 2)} kvar`);
+        $('sub1Label').textContent = 'Schijnbaar vermogen S';
+        $('sub1Value').textContent = power(r.S, 'VA');
+      }
+      $('mainLabel').textContent = state.system === '3f' ? 'Stroom I per fase' : 'Stroom I';
+      $('mainValue').textContent = current(I);
+      $('sub2Label').textContent = 'Blindvermogen Q';
+      $('sub2Value').textContent = power(r.Q, 'var');
+    }
+    $('steps').textContent = lines.join('\n');
+  }
+
+  /* ---------- Tabel aansluitingen ---------- */
+  const CONNECTIONS = [
+    { name: '1 × 25 A', sys: '1f', I: 25 }, { name: '1 × 35 A', sys: '1f', I: 35 },
+    { name: '3 × 25 A', sys: '3f', I: 25 }, { name: '3 × 35 A', sys: '3f', I: 35 },
+    { name: '3 × 50 A', sys: '3f', I: 50 }, { name: '3 × 63 A', sys: '3f', I: 63 },
+    { name: '3 × 80 A', sys: '3f', I: 80 },
+  ];
+  function renderTable(cos) {
+    $('tblCos').textContent = fmtIn(cos);
+    $('tbl').innerHTML = CONNECTIONS.map((c, idx) => {
+      const r = fromCurrent(c.sys, 'll', c.I, c.sys === '1f' ? 230 : 400, cos);
+      return `<tr data-idx="${idx}"><td>${c.name}</td><td class="num">${fmt(r.S / 1000, 1)}</td><td class="num">${fmt(r.P / 1000, 1)}</td></tr>`;
+    }).join('');
+  }
+
+  /* ---------- Interactie ---------- */
+  function setSeg(container, value) {
+    container.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === value));
+  }
+  function setMode(mode) {
+    state.mode = mode;
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  }
+  // Bij wisselen van tab de waarde meenemen, zodat heen en terug consistent is
+  function carryOver(toMode) {
+    const U = parse($('U').value), cos = state.system === 'dc' ? 1 : parse($('cos').value);
+    if (!(U > 0 && cos > 0 && cos <= 1)) return;
+    const f = factor(state.system, state.voltType);
+    const kva = state.system !== 'dc' && state.pType === 'kva';
+    if (toMode === 'kw2a') {
+      const I = parse($('I').value); if (!(I >= 0)) return;
+      const r = fromCurrent(state.system, state.voltType, I, U, cos);
+      $('P').value = fmtIn(+((kva ? r.S : r.P) / 1000).toFixed(3));
+    } else {
+      const P = parse($('P').value); if (!(P >= 0)) return;
+      const I = P * 1000 / (f * U * (kva ? 1 : cos));
+      $('I').value = fmtIn(+I.toFixed(2));
+    }
+  }
+
+  $('tabs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || b.dataset.mode === state.mode) return;
+    carryOver(b.dataset.mode);
+    setMode(b.dataset.mode);
+    update();
+  });
+  $('system').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.system = b.dataset.v; setSeg($('system'), state.system);
+    const U = parse($('U').value);
+    if (state.system === '1f' && U === 400) $('U').value = 230;
+    if (state.system === '3f' && state.voltType === 'll' && U === 230) $('U').value = 400;
+    update();
+  });
+  $('voltType').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.voltType = b.dataset.v; setSeg($('voltType'), state.voltType);
+    const U = parse($('U').value);
+    if (state.voltType === 'ln' && U === 400) $('U').value = 230;
+    if (state.voltType === 'll' && U === 230) $('U').value = 400;
+    update();
+  });
+  $('pType').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    e.preventDefault();
+    state.pType = b.dataset.v; setSeg($('pType'), state.pType);
+    update();
+  });
+  document.querySelectorAll('.chips').forEach(ch => ch.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    e.preventDefault();
+    $(ch.dataset.target).value = fmtIn(parseFloat(b.dataset.v));
+    update();
+  }));
+  ['I', 'P', 'U', 'cos'].forEach(id => $(id).addEventListener('input', update));
+
+  $('tbl').addEventListener('click', e => {
+    const tr = e.target.closest('tr'); if (!tr) return;
+    const c = CONNECTIONS[tr.dataset.idx];
+    setMode('a2kw');
+    state.system = c.sys; state.voltType = 'll';
+    setSeg($('system'), c.sys); setSeg($('voltType'), 'll');
+    $('I').value = c.I; $('U').value = c.sys === '1f' ? 230 : 400;
+    update();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Startwaarden
+  setMode(state.mode);
+  setSeg($('system'), state.system);
+  setSeg($('voltType'), state.voltType);
+  setSeg($('pType'), state.pType);
+  update();
+</script>
+</body>
+</html>
