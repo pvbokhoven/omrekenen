@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Omrekenen A ↔ kW</title>
-<link rel="icon" type="image/png" href="peter_avatar.png">
+<link rel="icon" type="image/png" href="https://van--bokhoven.com/peter_avatar.png">
+<script src="https://van--bokhoven.com/shared/footer.js" defer></script>
 <script>
   // Thema zo vroeg mogelijk zetten om flitsen te voorkomen
   try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
@@ -182,16 +183,6 @@
   .table-wrap { overflow-x: auto; }
   .note { font-size: .85rem; color: var(--muted); margin-top: 0; }
 
-  /* Footer, gelijk aan website peter */
-  footer {
-    background: #1e3a5f; color: rgba(255,255,255,.6);
-    padding: 1.5rem 16px; text-align: center; font-size: .88rem;
-  }
-  footer p { margin: 0; }
-  .footer-ai { margin-top: .4rem !important; font-size: .8rem; color: rgba(255,255,255,.35); }
-  .footer-inner { display: flex; align-items: center; justify-content: center; gap: 14px; text-align: left; }
-  /* Zelfde weergave als .nav-avatar op website peter */
-  .footer-avatar { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; object-fit: cover; display: block; }
 </style>
 </head>
 <body>
@@ -361,16 +352,6 @@
     </div>
   </details>
 </div>
-
-<footer>
-  <div class="footer-inner">
-    <img class="footer-avatar" src="peter_avatar.png" alt="Peter van Bokhoven">
-    <div>
-      <p>&copy; 2026 Peter van Bokhoven &mdash; Alle rechten voorbehouden</p>
-      <p class="footer-ai">✨ Gebouwd en gedeployed met behulp van AI</p>
-    </div>
-  </div>
-</footer>
 
 <script>
   const SQRT3 = Math.sqrt(3);
