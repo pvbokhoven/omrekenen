@@ -31,6 +31,12 @@ Verder geldt S = P / cos φ en Q = S · sin φ.
 
 ## Gebruik
 
-Open `index.html` lokaal in je browser, of zet GitHub Pages aan (Settings → Pages → branch `main`). De pagina staat dan op:
+Live op Vercel: https://omrekenen.van--bokhoven.com (elke push naar `main` wordt automatisch gedeployed).
 
-https://pvbokhoven.github.io/omrekenen/
+Lokaal: open `index.html` in je browser.
+
+## Footer en favicon
+
+De footer en favicon zijn gedeeld met de andere subsites en komen van de hoofdwebsite:
+[`shared/footer.js`](https://van--bokhoven.com/shared/footer.js) en `peter_avatar.png` op https://van--bokhoven.com.
+Wijzigingen daaraan doe je in de repo `website_peter`, niet hier.
